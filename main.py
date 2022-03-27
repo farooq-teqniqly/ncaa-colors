@@ -1,5 +1,7 @@
+import json
 import sys
 import re
+from functools import partial
 
 from bs4 import BeautifulSoup
 from tq_scroll_scrape.scroll_and_scrape import ScrollAndScrape
@@ -8,12 +10,17 @@ ROOT_URL = "https://teamcolorcodes.com/ncaa-color-codes/"
 
 
 def process_schools():
-    colors_dict = {}
+    all_schools = {}
+
+    def save_school(url: str, source: str):
+        with open(url.split("/")[-2], "w", encoding="utf-8") as school_file:
+            school_file.write(source)
 
     def get_colors(source: str):
         colors_soup = BeautifulSoup(source, "html.parser")
 
         school_name = colors_soup.select("h4 > strong")[1].text
+        colors = []
 
         colorblock_divs = colors_soup.find_all("div", class_="colorblock")
 
@@ -21,7 +28,7 @@ def process_schools():
             color = None
             hex_code = None
 
-            match = re.search(r"'(?P<color>\w+)PANTONE", div.text)
+            match = re.search(r"'*(?P<color>\w+)PANTONE", div.text)
 
             if match:
                 color = match.group("color")
@@ -31,7 +38,9 @@ def process_schools():
             if match:
                 hex_code = match.group("hex_code")
 
-            pass
+            colors.append((color, hex_code))
+
+        all_schools[school_name] = colors
 
     with open("root.html", "r") as file:
         soup = BeautifulSoup(file.read(), "html.parser")
@@ -40,9 +49,12 @@ def process_schools():
 
     for link in links:
         scroll_scraper = ScrollAndScrape()
-        scroll_scraper.download(link, get_colors)
+        scroll_scraper.download(link, partial(save_school, link))
         scroll_scraper.driver.close()
         scroll_scraper.driver.quit()
+
+    with open("all_schools.json", "w") as file:
+        file.write(json.dumps(all_schools))
 
 
 def save_root_html_file(source: str):
