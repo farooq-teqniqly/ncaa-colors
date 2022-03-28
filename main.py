@@ -74,8 +74,14 @@ def main(argv):
         scroll_scraper = ScrollAndScrape()
 
         for link in tqdm(links):
+            output_filename = os.path.join(OUTPUT_FOLDER, f"{link.split('/')[-2]}.html")
+
+            if os.path.exists(output_filename):
+                tqdm.write(f"File exists - {output_filename}")
+                continue
+
             scroll_scraper.download(link,
-                                    partial(save_html_file, os.path.join(OUTPUT_FOLDER, f"{link.split('/')[-2]}.html")))
+                                    partial(save_html_file, output_filename))
             scroll_scraper.driver.close()
 
         scroll_scraper.driver.quit()
