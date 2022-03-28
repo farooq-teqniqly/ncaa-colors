@@ -1,12 +1,15 @@
 import json
 import sys
 import re
+import os
 from functools import partial
+from tqdm import tqdm
 
 from bs4 import BeautifulSoup
 from tq_scroll_scrape.scroll_and_scrape import ScrollAndScrape
 
 ROOT_URL = "https://teamcolorcodes.com/ncaa-color-codes/"
+OUTPUT_FOLDER = os.path.join(os.getcwd(), "output")
 
 
 def process_schools():
@@ -57,20 +60,42 @@ def process_schools():
         file.write(json.dumps(all_schools))
 
 
-def save_root_html_file(source: str):
-    with open("root.html", "w") as file:
+def save_html_file(path: str, source: str):
+    with open(path, "w", encoding="utf-8") as file:
         file.write(source)
-    print("File saved to root.html.")
+        tqdm.write(f"File saved - {path}")
 
 
 def main(argv):
-    if argv[0] == "--process-root":
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.makedirs(OUTPUT_FOLDER)
+
+    if argv[0] == "--download-root":
         scroll_scraper = ScrollAndScrape()
-        scroll_scraper.download(ROOT_URL, save_root_html_file, sleep_after_scroll_seconds=1, scroll_by=500)
+        scroll_scraper.download(ROOT_URL,
+                                partial(save_html_file, os.path.join(OUTPUT_FOLDER, "root.html")),
+                                sleep_after_scroll_seconds=1, scroll_by=1000)
         scroll_scraper.driver.close()
         scroll_scraper.driver.quit()
-    elif argv[0] == "--process-schools":
-        process_schools()
+    elif argv[0] == "--download-schools":
+        with open(os.path.join(OUTPUT_FOLDER, "root.html"), "r", encoding="utf-8") as file:
+            soup = BeautifulSoup(file.read(), "html.parser")
+
+        links = [a.get("href") for a in soup.find_all("a")][144:431]
+        scroll_scraper = ScrollAndScrape()
+
+        for link in tqdm(links):
+            output_filename = os.path.join(OUTPUT_FOLDER, f"{link.split('/')[-2]}.html")
+
+            if os.path.exists(output_filename):
+                tqdm.write(f"File exists - {output_filename}")
+                continue
+
+            scroll_scraper.download(link,
+                                    partial(save_html_file, output_filename))
+            scroll_scraper.driver.close()
+
+        scroll_scraper.driver.quit()
 
 
 if __name__ == "__main__":
