@@ -1,17 +1,72 @@
 import json
-import sys
-import re
 import os
+import sys
 from functools import partial
-from typing import Dict, Tuple, List
-
-from tqdm import tqdm
+from typing import Tuple, List
 
 from bs4 import BeautifulSoup
 from tq_scroll_scrape.scroll_and_scrape import ScrollAndScrape
+from tqdm import tqdm
+from collections import OrderedDict
 
 ROOT_URL = "https://teamcolorcodes.com/ncaa-color-codes/"
 OUTPUT_FOLDER = os.path.join(os.getcwd(), "output")
+
+
+def get_stats() -> dict:
+    colors = OrderedDict()
+    with open(os.path.join(os.getcwd(), "output", "all_schools.json"), "r", encoding="utf-8") as file:
+        all_schools = json.load(file)
+
+        for school in all_schools:
+            primary_color = school[1][0].lower()
+            if "blue" in primary_color:
+                primary_color = "blue"
+            elif "navy" in primary_color:
+                primary_color = "blue"
+            elif "royal" in primary_color:
+                primary_color = "blue"
+            elif "red" in primary_color:
+                primary_color = "red"
+            elif "warhawk" in primary_color:
+                primary_color = "red"
+            elif "cranberry" in primary_color:
+                primary_color = "red"
+            elif "carnelian" in primary_color:
+                primary_color = "red"
+            elif "cardinal" in primary_color:
+                primary_color = "red"
+            elif "crimson" in primary_color:
+                primary_color = "red"
+            elif "scarlet" in primary_color:
+                primary_color = "red"
+            elif "garnet" in primary_color:
+                primary_color = "red"
+            elif "maroon" in primary_color:
+                primary_color = "red"
+            elif "purple" in primary_color:
+                primary_color = "purple"
+            elif "green" in primary_color:
+                primary_color = "green"
+            elif "white" in primary_color:
+                primary_color = "white"
+            elif "gold" in primary_color:
+                primary_color = "gold"
+            elif "orange" in primary_color:
+                primary_color = "orange"
+            elif "yellow" in primary_color:
+                primary_color = "yellow"
+            elif "black" in primary_color:
+                primary_color = "black"
+            elif "brown" in primary_color:
+                primary_color = "brown"
+
+            if primary_color in colors:
+                colors[primary_color] = colors[primary_color] + 1
+            else:
+                colors[primary_color] = 1
+
+    return colors
 
 
 def process_schools() -> List[Tuple[str, List[str]]]:
@@ -76,6 +131,9 @@ def main(argv):
 
         with open(os.path.join(os.getcwd(), "output", "all_schools.json"), "w", encoding="utf-8") as file:
             file.write(json.dumps(all_school_colors))
+    elif argv[0] == "--get-stats":
+        stats = get_stats()
+        pass
 
 
 if __name__ == "__main__":
