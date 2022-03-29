@@ -70,8 +70,10 @@ def main(argv):
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
 
+    driver_path = os.path.join(os.getcwd(), "geckodriver.exe")
+
     if argv[0] == "--download-root":
-        scroll_scraper = ScrollAndScrape()
+        scroll_scraper = ScrollAndScrape(driver_path)
         scroll_scraper.download(ROOT_URL,
                                 partial(save_html_file, os.path.join(OUTPUT_FOLDER, "root.html")),
                                 sleep_after_scroll_seconds=1, scroll_by=1000)
@@ -82,7 +84,7 @@ def main(argv):
             soup = BeautifulSoup(file.read(), "html.parser")
 
         links = [a.get("href") for a in soup.find_all("a")][144:431]
-        scroll_scraper = ScrollAndScrape()
+        scroll_scraper = ScrollAndScrape(driver_path)
 
         for link in tqdm(links):
             output_filename = os.path.join(OUTPUT_FOLDER, f"{link.split('/')[-2]}.html")
